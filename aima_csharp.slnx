@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="aima.tests/aima.tests.csproj" />
+  <Project Path="aima/aima.csproj" />
+</Solution>
