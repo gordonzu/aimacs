@@ -100,8 +100,7 @@ public static class Env
     public uint W;
     public uint H;
     public SortedSet<TypeRef> Agents;
-    //public SortedDictionary<int, TypeRef> Objects;
-    public Dictionary<TypeRef, XyLocation> Locations;
+    public Dictionary<int, XyLocation> Locations;
     public SortedDictionary<XyLocation, SortedSet<TypeRef>> XySpace;
   }
 
@@ -119,8 +118,7 @@ public static class Env
       W = (uint)w,
       H = (uint)h,
       Agents = new SortedSet<TypeRef>(),
-			//Objects = new SortedDictionary<int, TypeRef>(),
-      Locations = new Dictionary<TypeRef, XyLocation>(),
+      Locations = new Dictionary<int, XyLocation>(),
       XySpace = new SortedDictionary<XyLocation, SortedSet<TypeRef>>()
     };
 
@@ -160,14 +158,14 @@ public static class Env
 		if (!InBounds(env, loc)) 
 			return false;
 
-    if (!env.XySpace.TryGetValue(loc, out SortedSet<TypeRef> simObjects) || simObjects is null)
+    if (!env.XySpace.TryGetValue(loc, out SortedSet<TypeRef> objs) || objs is null)
 			return false; 
 
     if (r.Type == Type.Agent)
 			env.Agents.Add(r);
 
-		simObjects.Add(r);
-    env.Locations[r] = loc;
+		objs.Add(r);
+    env.Locations[r.Id] = loc;
     return true;
   }
 
@@ -176,7 +174,7 @@ public static class Env
 
 	public static XyLocation GetCurrentLocationForObject(TypeRef r, XyEnvironment env)
 	{
-		return new XyLocation(2, 2);
+		return env.Locations[r.Id];
 	}	
 
 	/******************************************************************************
