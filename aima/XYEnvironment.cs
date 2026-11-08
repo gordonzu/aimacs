@@ -3,14 +3,14 @@
 using System.Collections.Generic;
 namespace aima;
 
+
 public static class Env
-{
+{	
   public enum Type { Wall, Agent, Dirt, Gold }
   public enum Direction { North, South, East, West }
 
   private static int _counter = 0;
   private static int NextId() => ++_counter;
-
 
   public readonly struct TypeRef : IComparable<TypeRef>, IEquatable<TypeRef>
   {
@@ -45,7 +45,6 @@ public static class Env
     TypeRef Ref { get; } 
   }
 
-
   public struct Gold : IGameObject 
   { 
     public TypeRef Ref { get; } 
@@ -55,7 +54,6 @@ public static class Env
       Ref = new TypeRef(Type.Gold);
     }
   }
-
 
   public struct Dirt : IGameObject 
   { 
@@ -67,7 +65,6 @@ public static class Env
     }
   }
 
-
   public struct Wall : IGameObject 
   { 
     public TypeRef Ref { get; } 
@@ -77,7 +74,6 @@ public static class Env
       Ref = new TypeRef(Type.Wall);
     }
   }
-
 
   public struct Agent : IGameObject 
   {
@@ -90,7 +86,6 @@ public static class Env
     }
   }
     
-  
   public readonly record struct XyLocation(int X, int Y) : IComparable<XyLocation>
   {
     public int CompareTo(XyLocation other)
@@ -100,16 +95,18 @@ public static class Env
     }
   }
 
-  
   public struct XyEnvironment
   {
     public uint W;
     public uint H;
-    public SortedSet<TypeRef> Tiles;
-    public SortedDictionary<int, XyLocation> Locations;
+    public SortedSet<TypeRef> Agents;
+    //public SortedDictionary<int, TypeRef> Objects;
+    public Dictionary<TypeRef, XyLocation> Locations;
     public SortedDictionary<XyLocation, SortedSet<TypeRef>> XySpace;
   }
-  
+
+	/************************************************************************
+	 ***********************************************************************/
 
   public static XyEnvironment CreateXyEnvironment(int w, int h)
   {
@@ -121,8 +118,9 @@ public static class Env
     {
       W = (uint)w,
       H = (uint)h,
-      Tiles = new SortedSet<TypeRef>(),
-      Locations = new SortedDictionary<int, XyLocation>(),
+      Agents = new SortedSet<TypeRef>(),
+			//Objects = new SortedDictionary<int, TypeRef>(),
+      Locations = new Dictionary<TypeRef, XyLocation>(),
       XySpace = new SortedDictionary<XyLocation, SortedSet<TypeRef>>()
     };
 
@@ -133,32 +131,18 @@ public static class Env
     return env;
   }
 
-  
-  public static bool InBounds(XyEnvironment env, XyLocation loc)
+	/****************************************************************************
+	 ***************************************************************************/
+
+  public static TypeRef? AddAgent(ref XyEnvironment env, XyLocation xy) 
   {
-    return loc.X >= 1 && loc.Y >= 1 &&
-      loc.X <= env.W &&
-      loc.Y <= env.H;         
+    return AddSimObject<Agent>(ref env, xy);
   }
 
-  
-  public static bool AddObjectToLocation(TypeRef @ref, XyEnvironment env, XyLocation loc)
-  {
-    if (!env.XySpace.TryGetValue(loc, out SortedSet<TypeRef> objects)) return false;
+	/****************************************************************************
+	 ****************************************************************************/ 
 
-    /*if (!RegisterObject(env.Objects, @ref))
-    {
-    //System.Console.Out.Write("UNREGISTERED" + "\n");
-    return false;
-  }*/
-
-    objects.Add(@ref);
-    env.Locations[@ref.Id] = loc;
-    return true;
-  }
-
-  
-  public static TypeRef? AddGameObject<T>(ref XyEnvironment env, XyLocation xy) where T : struct, IGameObject
+	public static TypeRef? AddSimObject<T>(ref XyEnvironment env, XyLocation xy) where T : struct, IGameObject
   {
     T obj = new();
 
@@ -168,11 +152,45 @@ public static class Env
     return obj.Ref;
   }
 
-  
-  public static TypeRef? AddAgent(ref XyEnvironment env, XyLocation xy) 
+	/*****************************************************************************
+	 ****************************************************************************/
+
+ 	public static bool AddObjectToLocation(TypeRef r, XyEnvironment env, XyLocation loc)
   {
-    return AddGameObject<Agent>(ref env, xy);
+		if (!InBounds(env, loc)) 
+			return false;
+
+    if (!env.XySpace.TryGetValue(loc, out SortedSet<TypeRef> simObjects) || simObjects is null)
+			return false; 
+
+    if (r.Type == Type.Agent)
+			env.Agents.Add(r);
+
+		simObjects.Add(r);
+    env.Locations[r] = loc;
+    return true;
   }
+
+	/****************************************************************************
+	 ****************************************************************************/
+
+	public static XyLocation GetCurrentLocationForObject(TypeRef r, XyEnvironment env)
+	{
+		return new XyLocation(2, 2);
+	}	
+
+	/******************************************************************************
+ 	 *****************************************************************************/
+
+  public static bool InBounds(XyEnvironment env, XyLocation loc)
+  {
+    return loc.X >= 1 && loc.Y >= 1 &&
+      loc.X <= env.W &&
+      loc.Y <= env.H;         
+  }
+ 
+	/*****************************************************************************
+	 ****************************************************************************/ 
 
 
 }
